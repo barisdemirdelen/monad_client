@@ -30,11 +30,6 @@ void ofApp::setup(){
     ofBackground(255);
     ofSetFrameRate(30);
     
-    //udp receiver
-    udpReceive.Create();
-    udpReceive.Bind(10003);
-    udpReceive.SetNonBlocking(true);
-    
     if( me == NULL){
         
         // set up values of objects
@@ -186,13 +181,13 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
         if (IP != "" && nick != "") {
             
             //tcp
-            client.setup(IP, 10002);
-            client.setMessageDelimiter("vnet");
+//            client.setup(IP, 10002);
+//            client.setMessageDelimiter("vnet");
             
             //udp
-            udpSend.Create();
-            udpSend.Connect(IP.c_str(), 10003);
-            udpSend.SetNonBlocking(true);
+            udpManager.Create();
+            udpManager.Connect(IP.c_str(), 10002);
+            udpManager.SetNonBlocking(true);
             
             
             Player* _player = new Player();
@@ -200,7 +195,7 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
             me = _player;
             
             // ask for server state
-            if(client.isConnected()) client.send("hello//"+me->getNick());
+            udpManager.Send(("hello//"+me->getNick()).c_str(), 100);
         }
     }
     
@@ -825,16 +820,16 @@ void ofApp::update(){
 //            ofxUISlider *slider = static_cast <ofxUISlider*> (canvas->getWidget("rotation"+ofToString(me->getDiscIndex()+1)));
 //            float newRotation = slider->getValue();
             sendmsg = "rot//"+ ofToString(me->getDiscIndex())+": "+ ofToString(disc.getNetRotationSpeed(me->getDiscIndex()))+"//"+me->getIP();
-            udpSend.Send(sendmsg.c_str(), 100);
+            udpManager.Send(sendmsg.c_str(), 100);
             
             sendmsg = "rad//"+ofToString(me->getDiscIndex())+": "+ofToString(disc.getThickness(me->getDiscIndex()))+"//"+me->getIP();
-            udpSend.Send(sendmsg.c_str(), 100);
+            udpManager.Send(sendmsg.c_str(), 100);
             
             sendmsg = "den//"+ ofToString(me->getDiscIndex())+": "+ ofToString(disc.getDensity(me->getDiscIndex()))+"//"+me->getIP();
-            udpSend.Send(sendmsg.c_str(), 100);
+            udpManager.Send(sendmsg.c_str(), 100);
             
             sendmsg = "spk//"+ ofToString(me->getDiscIndex())+": "+ ofToString(disc.getSpikeDistance(me->getDiscIndex()))+"//"+me->getIP();
-            udpSend.Send(sendmsg.c_str(), 100);
+            udpManager.Send(sendmsg.c_str(), 100);
         }
         
     }
@@ -842,7 +837,7 @@ void ofApp::update(){
     //UDP receive
     if(TCPsetup){
         char udpMessage[1000];
-        udpReceive.Receive(udpMessage,1000);
+        udpManager.Receive(udpMessage,1000);
         string message = udpMessage;
         
         if(message.length()>0){
